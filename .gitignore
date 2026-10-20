@@ -15,3 +15,4 @@ checkpoints/
 models/
 .idea/
 .vscode/
+/configs/models.yaml
