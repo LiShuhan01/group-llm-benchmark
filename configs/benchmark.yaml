@@ -1,21 +1,46 @@
-dataset_version: "v0.1-demo"
+# Group LLM Benchmark 公共配置
+# 本文件不存放模型权重路径、API 密钥或其他个人配置。
 
-generation:
-  max_new_tokens: 256
-  do_sample: false
-  temperature: 1.0
-  top_p: 1.0
+benchmark:
+  name: group-llm-benchmark
+  version: "0.1.0"
 
+# 三个任务的统一登记
 tasks:
-  medical_qa:
-    dataset: data/medical_qa/test.jsonl
-    prompt_template: prompts/medical_qa.txt
-    evaluator: medical
-  math_reasoning:
-    dataset: data/math_reasoning/test.jsonl
-    prompt_template: prompts/math_reasoning.txt
-    evaluator: math
   text_summarization:
-    dataset: data/text_summarization/test.jsonl
-    prompt_template: prompts/text_summarization.txt
+    enabled: true
+    dataset_path: data/text_summarization/test.jsonl
+    dataset_version: demo-v0.1
     evaluator: summarization
+
+  math_reasoning:
+    enabled: false
+    dataset_path: data/math_reasoning/test.jsonl
+    dataset_version: pending
+    evaluator: math
+
+  medical_qa:
+    enabled: false
+    dataset_path: data/medical_qa/test.jsonl
+    dataset_version: pending
+    evaluator: medical
+
+# 所有任务共用的运行设置
+inference:
+  temperature: 0.0
+  max_new_tokens: 256
+  seed: 42
+
+# 结果保存位置
+output:
+  root_dir: outputs/runs
+  save_predictions: true
+  save_metrics: true
+  save_run_metadata: true
+
+# 跨模型比较所需的记录字段
+comparison:
+  record_base_model_id: true
+  record_finetuned_model_id: true
+  record_dataset_version: true
+  record_inference_config: true
