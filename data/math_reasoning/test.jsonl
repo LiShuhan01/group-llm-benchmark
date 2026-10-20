@@ -1,0 +1,2 @@
+{"id":"math_demo_001","task":"math_reasoning","input":"计算 12 × 13。","reference":"156","metadata":{"source":"demo_only","split":"test"}}
+{"id":"math_demo_002","task":"math_reasoning","input":"计算 25 × 4。","reference":"100","metadata":{"source":"demo_only","split":"test"}}

@@ -1,0 +1,33 @@
+models:
+  # TODO: 将 /YOUR/PATH/... 替换为服务器实际路径
+  qwen_summary_lora:
+    backend: transformers
+    base_model: /YOUR/PATH/TO/BASE_MODEL
+    adapter_path: /YOUR/PATH/TO/SUMMARY_LORA
+    trust_remote_code: false
+    device_map: auto
+    tasks: [text_summarization]
+
+  qwen_math_lora:
+    backend: transformers
+    base_model: /YOUR/PATH/TO/BASE_MODEL
+    adapter_path: /YOUR/PATH/TO/MATH_LORA
+    trust_remote_code: false
+    device_map: auto
+    tasks: [math_reasoning]
+
+  qwen_medical_lora:
+    backend: transformers
+    base_model: /YOUR/PATH/TO/BASE_MODEL
+    adapter_path: /YOUR/PATH/TO/MEDICAL_LORA
+    trust_remote_code: false
+    device_map: auto
+    tasks: [medical_qa]
+
+  # vLLM 示例：先启动兼容 OpenAI API 的服务
+  qwen_base_vllm:
+    backend: vllm
+    api_base: http://127.0.0.1:8000/v1
+    api_key: EMPTY
+    served_model_name: qwen-base
+    tasks: [medical_qa, math_reasoning, text_summarization]

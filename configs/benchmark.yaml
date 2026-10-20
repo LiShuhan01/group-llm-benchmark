@@ -1,0 +1,21 @@
+dataset_version: "v0.1-demo"
+
+generation:
+  max_new_tokens: 256
+  do_sample: false
+  temperature: 1.0
+  top_p: 1.0
+
+tasks:
+  medical_qa:
+    dataset: data/medical_qa/test.jsonl
+    prompt_template: prompts/medical_qa.txt
+    evaluator: medical
+  math_reasoning:
+    dataset: data/math_reasoning/test.jsonl
+    prompt_template: prompts/math_reasoning.txt
+    evaluator: math
+  text_summarization:
+    dataset: data/text_summarization/test.jsonl
+    prompt_template: prompts/text_summarization.txt
+    evaluator: summarization

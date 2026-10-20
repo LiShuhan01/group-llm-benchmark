@@ -1,0 +1,6 @@
+PyYAML>=6.0
+requests>=2.31
+rouge-score>=0.1.2
+transformers>=4.45
+peft>=0.13
+torch

@@ -1,0 +1,1 @@
+{"id":"medical_demo_001","task":"medical_qa","input":"高血压患者日常管理有哪些一般性注意事项？","reference":"应结合个体情况，在专业医务人员指导下监测血压、健康饮食、规律运动，并遵医嘱用药；具体方案需由医务人员评估。","metadata":{"source":"demo_only","split":"test"}}

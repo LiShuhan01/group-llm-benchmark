@@ -1,0 +1,1 @@
+{"id":"summary_demo_001","task":"text_summarization","input":"学校今天举行运动会。小明参加了短跑比赛，并获得了第一名。老师表扬了所有积极参与的同学。","reference":"学校举行运动会，小明在短跑比赛中获得第一名，老师表扬了积极参与的同学。","metadata":{"source":"demo_only","split":"test"}}
