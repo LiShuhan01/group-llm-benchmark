@@ -1,34 +1,103 @@
-models:
-  # 示例配置：请复制为 models.yaml，并填写实际路径
+# Group LLM Benchmark 公共模型配置模板
+#
+# 使用方式：
+#   cp configs/models.example.yaml configs/models.yaml
+#
+# 然后将占位路径替换为实际模型路径。
+# configs/models.yaml 是个人配置，不应提交到 GitHub。
 
-  qwen_summary_lora:
+models:
+
+  # =========================================================
+  # 示例一：文本摘要领域
+  # =========================================================
+
+  qwen_summary_base:
     backend: transformers
-    base_model: /PATH/TO/Qwen2.5-3B-Instruct
+    role: base
+    base_model_id: qwen_summary_base
+    base_model: /PATH/TO/SUMMARY_BASE_MODEL
+    adapter_path: null
+    trust_remote_code: false
+    device_map: auto
+    tasks:
+      - text_summarization
+
+  qwen_summary_finetuned:
+    backend: transformers
+    role: finetuned
+    base_model_id: qwen_summary_base
+    base_model: /PATH/TO/SUMMARY_BASE_MODEL
     adapter_path: /PATH/TO/SUMMARY_LORA
     trust_remote_code: false
     device_map: auto
-    tasks: [text_summarization]
+    tasks:
+      - text_summarization
 
-  qwen_math_lora:
+  # =========================================================
+  # 示例二：数学领域
+  # 注意：数学模型可以使用完全不同的基座模型。
+  # =========================================================
+
+  math_base:
     backend: transformers
+    role: base
+    base_model_id: math_base
+    base_model: /PATH/TO/MATH_BASE_MODEL
+    adapter_path: null
+    trust_remote_code: false
+    device_map: auto
+    tasks:
+      - math_reasoning
+
+  math_finetuned:
+    backend: transformers
+    role: finetuned
+    base_model_id: math_base
     base_model: /PATH/TO/MATH_BASE_MODEL
     adapter_path: /PATH/TO/MATH_LORA
     trust_remote_code: false
     device_map: auto
-    tasks: [math_reasoning]
+    tasks:
+      - math_reasoning
 
-  qwen_medical_lora:
+  # =========================================================
+  # 示例三：医疗领域
+  # =========================================================
+
+  medical_base:
     backend: transformers
+    role: base
+    base_model_id: medical_base
+    base_model: /PATH/TO/MEDICAL_BASE_MODEL
+    adapter_path: null
+    trust_remote_code: false
+    device_map: auto
+    tasks:
+      - medical_qa
+
+  medical_finetuned:
+    backend: transformers
+    role: finetuned
+    base_model_id: medical_base
     base_model: /PATH/TO/MEDICAL_BASE_MODEL
     adapter_path: /PATH/TO/MEDICAL_LORA
     trust_remote_code: false
     device_map: auto
-    tasks: [medical_qa]
+    tasks:
+      - medical_qa
 
-  # vLLM 示例：api_base、服务名称需与实际服务一致
-  qwen_base_vllm:
+  # =========================================================
+  # 示例四：vLLM 服务
+  # 只有服务实际提供相应任务时，才能登记对应任务。
+  # =========================================================
+
+  my_vllm_model:
     backend: vllm
+    role: base
+    base_model_id: my_vllm_model
     api_base: http://127.0.0.1:8000/v1
     api_key: EMPTY
-    served_model_name: qwen-base
-    tasks: [medical_qa, math_reasoning, text_summarization]
+    served_model_name: YOUR_SERVED_MODEL_NAME
+    tasks:
+      - text_summarization
