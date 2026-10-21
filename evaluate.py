@@ -6,6 +6,7 @@ import yaml
 
 from evaluators.math import evaluate as eval_math
 from evaluators.medical import evaluate as eval_medical
+from evaluators.medical_mcq_v1 import evaluate as eval_medical_mcq
 from evaluators.summarization import evaluate as eval_summary
 
 ROOT = Path(__file__).resolve().parent
@@ -14,6 +15,7 @@ EVALUATORS = {
     "math_reasoning": eval_math,
     "text_summarization": eval_summary,
     "medical_qa": eval_medical,
+    "medical_mcq_xmedbench_v1": eval_medical_mcq,
 }
 
 
@@ -109,7 +111,10 @@ def main():
         sample_id = item["id"]
         if sample_id in references:
             raise ValueError(f"测试集存在重复 id：{sample_id}")
-        references[sample_id] = item["reference"]
+        references[sample_id] = {
+            "reference": item["reference"],
+            "metadata": item.get("metadata", {}),
+        }
 
     for item in predictions:
         if "sample_id" not in item:
@@ -121,7 +126,9 @@ def main():
                 f"预测中出现测试集不存在的 sample_id：{sample_id}"
             )
 
-        item["reference"] = references[sample_id]
+        matched = references[sample_id]
+        item["reference"] = matched["reference"]
+        item["metadata"] = matched["metadata"]
 
     metrics = EVALUATORS[args.task](predictions)
     metrics["task"] = args.task

@@ -935,3 +935,24 @@ Group LLM Benchmark 的目标是为组内不同研究领域、不同基座模型
 - 将模型权重和个人路径留在各自工作目录中。
 
 **当前项目仍处于框架建设阶段。** 正式测试集、任务指标和跨领域比较方案需要由组内共同确定。只有在这些内容经过审查并固定后，才能将评估结果作为正式的模型能力结论。
+
+## LCSTS 与 XMedBench 评估数据
+
+本项目目前准备了两个评估任务：
+
+| 任务 | 数据集 | 当前样本数 | 评估指标 |
+|---|---|---:|---|
+| `text_summarization` | LCSTS | 1,000 | ROUGE-1、ROUGE-2、ROUGE-L |
+| `medical_mcq_xmedbench_v1` | XMedBench 中文集 | 8,759 | 准确率、单选/多选准确率、无效答案率 |
+
+注意：当前 LCSTS 评估样本来自 validation 分割的固定随机种子抽样，并非独立官方测试集。医疗选择题准确率只衡量答案与参考答案的匹配情况，不代表完整的医学安全性评估。
+
+### 1. 准备 LCSTS 数据
+
+先从获准的数据来源获取 LCSTS，并确保数据已使用 Hugging Face Datasets 的 `save_to_disk` 格式保存。
+
+```bash
+python scripts/prepare_lcsts.py \
+  --source /你的实际路径/LCSTS \
+  --size 1000 \
+  --seed 42
