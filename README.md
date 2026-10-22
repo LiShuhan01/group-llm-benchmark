@@ -938,12 +938,13 @@ Group LLM Benchmark 的目标是为组内不同研究领域、不同基座模型
 
 ## LCSTS 与 XMedBench 评估数据
 
-本项目目前准备了两个评估任务：
+本项目目前准备了三个评估任务：
 
 | 任务 | 数据集 | 当前样本数 | 评估指标 |
 |---|---|---:|---|
 | `text_summarization` | LCSTS | 1,000 | ROUGE-1、ROUGE-2、ROUGE-L |
 | `medical_mcq_xmedbench_v1` | XMedBench 中文集 | 8,759 | 准确率、单选/多选准确率、无效答案率 |
+| `math_reasoning` | MGSM zh | 250 | strict_acc、flexible_acc（无效答案另计） |
 
 注意：当前 LCSTS 评估样本来自 validation 分割的固定随机种子抽样，并非独立官方测试集。医疗选择题准确率只衡量答案与参考答案的匹配情况，不代表完整的医学安全性评估。
 
@@ -956,3 +957,93 @@ python scripts/prepare_lcsts.py \
   --source /你的实际路径/LCSTS \
   --size 1000 \
   --seed 42
+```
+
+### 2. 准备 MGSM zh 数学数据
+
+`math_reasoning` 已正式接入 MGSM（GSM8K 的人工翻译多语言版）中文 test 集：
+250 题，答案为数值（`answer_number`），无空字段、id 唯一。
+
+- 数据文件：`data/math_reasoning/mgsm_zh_test_v1.jsonl`
+- 数据版本：`mgsm-zh-test-v1`（`configs/benchmark.yaml` 已启用，任务源 juletxara/mgsm 配置 zh、split test，全量使用、不做抽样）
+- 参考文件哈希（sha256，写入实验口径时以此为准）：
+  `357fa42702f2fe626db986f3fc8892e0251d6496d50738e138e1e87a75fad8fb`
+
+转换命令（二选一的数据源）：
+
+```bash
+# 优先：显式指定本地 parquet / jsonl 源（离线、可追溯）
+python scripts/prepare_math_mgsm.py --source /你的实际路径/mgsm_zh_test.parquet
+
+# 自动探测：同机器上存在 ../evalweave/data/mgsm_zh/test_v1.jsonl 时直接复用；
+# 两者皆缺时脚本会从 HF 镜像下载官方 parquet（需联网）。
+python scripts/prepare_math_mgsm.py
+```
+
+生成后同一来源与行序的样本 id 与 `benchmarks/evalweave` 的 MGSM 数据完全一致，
+两套评测流程可以逐题对照。
+
+#### Prompt 口径
+
+`prompts/math_reasoning.txt` 为 8-shot 思维链模板：MGSM train 前 8 题范例
+烘焙在模板内，末尾是 `问题: {input}\n逐步解答:`。范例文本派生自
+benchmarks/evalweave 已逐题对照验证的 `mgsm_zh_cot_v1` 模板（仅将占位符
+`{question}` 换成 `{input}`、去掉 ChatML 包裹），Prompt 哈希：
+
+sha256 `9519f0b0711e1d211c66edfae87fa9707da8c20f1b264cbd9725903b020acd9c`
+
+注意：Transformers 适配器会用 `apply_chat_template` 包裹 user 消息
+（Qwen 模板自动补默认 system 头），因此 **模板文件内不要再写
+`<|im_start|>` 等 ChatML 标记**，否则会被双重包裹。
+
+#### 评估口径（strict / flexible 双口径）
+
+math 评估器在解析前先做两处截断：复述的下一个"问题:"处、以及首个完整答案行
+（`#### N` 或 `答案是 N。`）处，复读内容不参与抽取，然后：
+
+- `strict_acc`（= `accuracy`）：按"答案是 X。"正则抽取（旧格式
+  "最终答案：/答案：/\\boxed{...}" 作为回退保留），与 reference 按数值比较
+  （均可解析为 float 时，如 40 == 40.0）；
+- `flexible_acc`：答案行截断后最后一个数字，与 reference 数值比较；
+- `num_invalid_answer`：strict 抽不到答案的有效样本数（此类样本计入
+  flexible 的分母，仍可命中 flexible_acc）。
+
+该口径与 `qwen_sft/eval_mgsm.py` 及 benchmarks/evalweave 的
+`MGSMZhCotTask` 一致，评估行为由 `scripts/test_math_evaluator.py`
+的 10 组边界用例锁定（正确/错误/空输出/复读截断/数值等价/旧格式兼容等）。
+
+#### 运行命令
+
+```bash
+# 冒烟（先各 3 条，确认 prediction 里出现"答案是 X。"或可解析数字）
+python run_benchmark.py --model qwen25_3b_base_math --task math_reasoning --limit 3
+python run_benchmark.py --model qwen25_3b_qlora_math3b --task math_reasoning --limit 3
+
+# 全量 250 题
+python run_benchmark.py --model qwen25_3b_base_math --task math_reasoning
+python run_benchmark.py --model qwen25_3b_qlora_math3b --task math_reasoning
+
+# 评分
+python evaluate.py --predictions outputs/runs/<run_id>/predictions.jsonl --task math_reasoning
+
+# 评估器回归
+python scripts/test_math_evaluator.py
+```
+
+个人模型配置（`configs/models.yaml`，不入库）示例中登记了
+`qwen25_3b_base_math`（Qwen2.5-3B 基座）与
+`qwen25_3b_qlora_math3b`（同一基座 + math3b QLoRA 适配器），
+`tasks` 均为 `math_reasoning`；路径与 benchmarks/evalweave 的模型配置一致，
+便于跨框架逐题核对。
+
+#### 已知限制
+
+- 与 evalweave 流程的差异：本框架由适配器统一包 ChatML，且无自定义
+  stopping criteria，基座模型多数题会生成满 256 token，速度偏慢属正常，
+  判分端截断兜底（两框架行为等价）；
+- MGSM 为 GSM8K 的翻译数据，中文译文可能存在少量翻译噪声；
+  许可以 juletxara/mgsm 原数据集卡片为准；
+- `data/math_reasoning/test.jsonl`（2 条 demo 乘法题）保留作为格式示例，
+  正式评估一律使用 `mgsm_zh_test_v1.jsonl`；
+- 结果比较需以束、Prompt、生成参数一致为前提；小样本（--limit）结果
+  不能作为模型能力结论。

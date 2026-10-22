@@ -7,7 +7,12 @@ REQUIRED = {"id", "task", "input", "reference"}
 
 
 def main():
-    files = sorted(DATA.glob("*/test.jsonl"))
+    # 同时覆盖固定名 test.jsonl、带版本后缀 test_*.jsonl
+    # 与 *_v1.jsonl（如 lcsts_test_v1、xmedbench_zh_v1）。
+    patterns = ("*/test.jsonl", "*/test_*.jsonl", "*/*_v1.jsonl")
+    files = sorted(
+        {path for pattern in patterns for path in DATA.glob(pattern)}
+    )
     if not files:
         raise SystemExit("未找到 data/*/test.jsonl")
     for path in files:

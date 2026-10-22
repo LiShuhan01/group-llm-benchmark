@@ -13,9 +13,9 @@ tasks:
     dataset_version: ancient-translation-v1
     evaluator: ancient_translation
   math_reasoning:
-    enabled: false
-    dataset_path: data/math_reasoning/test.jsonl
-    dataset_version: pending
+    enabled: true
+    dataset_path: data/math_reasoning/mgsm_zh_test_v1.jsonl
+    dataset_version: mgsm-zh-test-v1
     evaluator: math
   medical_qa:
     enabled: false
