@@ -7,6 +7,11 @@ tasks:
     dataset_path: data/text_summarization/lcsts_test_v1.jsonl
     dataset_version: lcsts-test-v1
     evaluator: summarization
+  ancient_translation:
+    enabled: true
+    dataset_path: data/ancient_translation/test_v1.jsonl
+    dataset_version: ancient-translation-v1
+    evaluator: ancient_translation
   math_reasoning:
     enabled: false
     dataset_path: data/math_reasoning/test.jsonl

@@ -4,19 +4,38 @@ from pathlib import Path
 
 import yaml
 
-from evaluators.math import evaluate as eval_math
-from evaluators.medical import evaluate as eval_medical
-from evaluators.medical_mcq_v1 import evaluate as eval_medical_mcq
-from evaluators.summarization import evaluate as eval_summary
+import importlib
 
 ROOT = Path(__file__).resolve().parent
 
-EVALUATORS = {
-    "math_reasoning": eval_math,
-    "text_summarization": eval_summary,
-    "medical_qa": eval_medical,
-    "medical_mcq_xmedbench_v1": eval_medical_mcq,
-}
+
+def load_evaluators():
+    """根据 benchmark.yaml 中的 evaluator 配置动态加载评估器。"""
+    config_path = ROOT / "configs" / "benchmark.yaml"
+    with config_path.open("r", encoding="utf-8") as f:
+        config = yaml.safe_load(f) or {}
+
+    registry = {}
+    for task, task_cfg in config.get("tasks", {}).items():
+        evaluator_name = (task_cfg or {}).get("evaluator")
+        if not evaluator_name:
+            continue
+
+        module = importlib.import_module(
+            f"evaluators.{evaluator_name}"
+        )
+        evaluator = getattr(module, "evaluate", None)
+        if not callable(evaluator):
+            raise ValueError(
+                f"评估器 evaluators/{evaluator_name}.py "
+                f"没有提供可调用的 evaluate() 函数"
+            )
+        registry[task] = evaluator
+
+    return registry
+
+
+EVALUATORS = load_evaluators()
 
 
 def read_jsonl(path):
