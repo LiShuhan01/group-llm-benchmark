@@ -944,7 +944,7 @@ Group LLM Benchmark 的目标是为组内不同研究领域、不同基座模型
 |---|---|---:|---|
 | `text_summarization` | LCSTS | 1,000 | ROUGE-1、ROUGE-2、ROUGE-L |
 | `medical_mcq_xmedbench_v1` | XMedBench 中文集 | 8,759 | 准确率、单选/多选准确率、无效答案率 |
-| `math_reasoning` | MGSM zh | 250 | strict_acc、flexible_acc（无效答案另计） |
+| `math_reasoning` | MGSM zh | 250 | strict_acc、flexible_acc |
 
 注意：当前 LCSTS 评估样本来自 validation 分割的固定随机种子抽样，并非独立官方测试集。医疗选择题准确率只衡量答案与参考答案的匹配情况，不代表完整的医学安全性评估。
 
@@ -1001,16 +1001,17 @@ sha256 `9519f0b0711e1d211c66edfae87fa9707da8c20f1b264cbd9725903b020acd9c`
 math 评估器在解析前先做两处截断：复述的下一个"问题:"处、以及首个完整答案行
 （`#### N` 或 `答案是 N。`）处，复读内容不参与抽取，然后：
 
-- `strict_acc`（= `accuracy`）：按"答案是 X。"正则抽取（旧格式
+- `strict_acc`：按"答案是 X。"正则抽取（旧格式
   "最终答案：/答案：/\\boxed{...}" 作为回退保留），与 reference 按数值比较
   （均可解析为 float 时，如 40 == 40.0）；
-- `flexible_acc`：答案行截断后最后一个数字，与 reference 数值比较；
-- `num_invalid_answer`：strict 抽不到答案的有效样本数（此类样本计入
-  flexible 的分母，仍可命中 flexible_acc）。
+- `flexible_acc`：答案行截断后最后一个数字，与 reference 数值比较。
 
-该口径与 `qwen_sft/eval_mgsm.py` 及 benchmarks/evalweave 的
-`MGSMZhCotTask` 一致，评估行为由 `scripts/test_math_evaluator.py`
-的 10 组边界用例锁定（正确/错误/空输出/复读截断/数值等价/旧格式兼容等）。
+评估器最终只输出这两项指标（`num_samples`、`num_scored`、`num_failed`
+为样本记录字段，不参与指标比较）。strict 抽不到答案时按错误计，仍留在分母，
+flexible 仍可能命中。该口径与 `qwen_sft/eval_mgsm.py` 及 benchmarks/evalweave
+的 `MGSMZhCotTask` 一致，评估行为由 `scripts/test_math_evaluator.py`
+的 11 组边界用例锁定（正确/错误/空输出/复读截断/数值等价/旧格式兼容、
+仅输出两项指标等）。
 
 #### 运行命令
 

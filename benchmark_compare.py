@@ -310,6 +310,7 @@ def print_console_report(metadata, comparisons, report_dir):
             "rouge_1", "rouge_2", "rouge_l",
             "accuracy", "single_choice_accuracy",
             "multiple_choice_accuracy",
+            "strict_acc", "flexible_acc",
         }
         recognized = [
             m for m in item["metrics"]

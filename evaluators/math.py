@@ -12,8 +12,8 @@ eval_mgsm.py 保持一致：
 4. 与 reference（数值字符串）比较：双方均可解析为 float 时按数值比较
    （如 “42.0” 与 “42” 视为相同），否则按规范化字符串比较。
 
-strict 抽不到时该样本计入 num_invalid_answer，但不计入失败样本
-（flexible 仍可能命中，见 flexible_acc）。
+输出只保留 strict_acc 与 flexible_acc 两项指标（另加样本数等记录字段）。
+strict 抽不到答案时该样本按错误计，仍计入分母；flexible 仍可能命中。
 """
 
 import re
@@ -86,7 +86,6 @@ def evaluate(predictions):
     valid = successful(predictions)
     strict_correct = 0
     flexible_correct = 0
-    invalid_answer = 0
     for item in valid:
         strict, flexible = extract(item.get("prediction", ""))
         reference = str(item.get("reference", ""))
@@ -94,21 +93,17 @@ def evaluate(predictions):
             strict_correct += 1
         if flexible is not None and answers_match(flexible, reference):
             flexible_correct += 1
-        if strict is None:
-            invalid_answer += 1
+
+    n = len(valid)
     return {
         "num_samples": len(predictions),
-        "num_scored": len(valid),
-        "num_failed": len(predictions) - len(valid),
-        "accuracy": strict_correct / len(valid) if valid else None,
-        "strict_acc": strict_correct / len(valid) if valid else None,
-        "flexible_acc": flexible_correct / len(valid) if valid else None,
-        "strict_correct": strict_correct,
-        "flexible_correct": flexible_correct,
-        "num_invalid_answer": invalid_answer,
+        "num_scored": n,
+        "num_failed": len(predictions) - n,
+        "strict_acc": strict_correct / n if n else None,
+        "flexible_acc": flexible_correct / n if n else None,
         "metric_note": (
-            "accuracy=strict_acc：按‘答案是 X。’(或旧格式)抽取的答案与"
-            " reference 数值比较；flexible_acc：答案行截断后最后一个数字；"
-            "num_invalid_answer：strict 不可解析的有效样本数。"
+            "strict_acc：按‘答案是 X。’(或旧格式)抽取的答案与 reference "
+            "数值比较；flexible_acc：答案行截断后最后一个数字。"
+            "strict 不可解析时按错误计，仍计入分母。"
         ),
     }
